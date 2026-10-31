@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morse Code Compiler — Encode & Decode</title>
+    <meta name="description" content="A beautiful Morse code compiler that converts text to Morse code with a blinking bulb animation, and decodes Morse code input from a telegraph switch.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ambient background particles -->
+    <div class="ambient-bg" id="ambientBg"></div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="dot"></span>
+                    <span class="dash"></span>
+                    <span class="dot"></span>
+                </div>
+                <h1>Morse Compiler</h1>
+            </div>
+            <p class="tagline">Encode · Decode · Visualize</p>
+        </header>
+
+        <!-- Mode Switcher -->
+        <nav class="mode-switcher" id="modeSwitcher">
+            <button class="mode-btn active" data-mode="encoder" id="encoderTab">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <span>Text → Morse</span>
+                <span class="mode-badge">Encoder</span>
+            </button>
+            <button class="mode-btn" data-mode="decoder" id="decoderTab">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <span>Morse → Text</span>
+                <span class="mode-badge">Decoder</span>
+            </button>
+        </nav>
+
+        <!-- ====== ENCODER MODE ====== -->
+        <section class="mode-panel active" id="encoderPanel">
+            <div class="encoder-grid">
+                <!-- Left: Input -->
+                <div class="panel-card input-card">
+                    <div class="card-header">
+                        <h2>Message Input</h2>
+                        <span class="char-count" id="charCount">0 / 200</span>
+                    </div>
+                    <textarea
+                        id="textInput"
+                        class="text-input"
+                        placeholder="Type your message here..."
+                        maxlength="200"
+                        spellcheck="false"
+                    ></textarea>
+                    <div class="input-actions">
+                        <button class="btn btn-primary" id="encodeBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            Encode & Play
+                        </button>
+                        <button class="btn btn-secondary" id="stopBtn" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                            Stop
+                        </button>
+                        <button class="btn btn-ghost" id="clearEncoderBtn">
+                            Clear
+                        </button>
+                    </div>
+                    <!-- Speed Control -->
+                    <div class="speed-control">
+                        <label for="speedSlider">Speed</label>
+                        <input type="range" id="speedSlider" min="1" max="10" value="5" class="speed-slider">
+                        <span class="speed-label" id="speedLabel">5x</span>
+                    </div>
+                </div>
+
+                <!-- Right: Bulb & Morse Output -->
+                <div class="panel-card bulb-card">
+                    <div class="card-header">
+                        <h2>Signal Output</h2>
+                        <div class="status-indicator" id="encoderStatus">
+                            <span class="status-dot"></span>
+                            <span>Ready</span>
+                        </div>
+                    </div>
+
+                    <!-- The Bulb -->
+                    <div class="bulb-container">
+                        <div class="bulb-glow" id="bulbGlow"></div>
+                        <div class="bulb" id="bulb">
+                            <div class="bulb-glass">
+                                <div class="filament"></div>
+                                <div class="filament filament-2"></div>
+                            </div>
+                            <div class="bulb-base">
+                                <div class="base-ring"></div>
+                                <div class="base-ring"></div>
+                                <div class="base-ring"></div>
+                                <div class="base-tip"></div>
+                            </div>
+                        </div>
+                        <div class="bulb-reflection" id="bulbReflection"></div>
+                    </div>
+
+                    <!-- Current character display -->
+                    <div class="current-signal" id="currentSignal">
+                        <span class="signal-char" id="signalChar">—</span>
+                        <span class="signal-morse" id="signalMorse"></span>
+                    </div>
+
+                    <!-- Morse output -->
+                    <div class="morse-output-box">
+                        <div class="morse-output" id="morseOutput">
+                            <span class="morse-placeholder">Morse code will appear here...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====== DECODER MODE ====== -->
+        <section class="mode-panel" id="decoderPanel">
+            <div class="decoder-grid">
+                <!-- Left: Telegraph Switch -->
+                <div class="panel-card switch-card">
+                    <div class="card-header">
+                        <h2>Telegraph Key</h2>
+                        <div class="timing-info">
+                            <span class="timing-dot">●</span> Short press = Dot
+                            <span class="timing-dash">━</span> Long press = Dash
+                        </div>
+                    </div>
+
+                    <!-- Telegraph Switch -->
+                    <div class="telegraph-container">
+                        <div class="telegraph-base">
+                            <div class="telegraph-arm-container">
+                                <div class="telegraph-arm" id="telegraphArm">
+                                    <div class="telegraph-knob" id="telegraphKnob"></div>
+                                </div>
+                                <div class="telegraph-pivot"></div>
+                            </div>
+                            <div class="telegraph-contact" id="telegraphContact"></div>
+                        </div>
+                        <!-- Visual indicator for press duration -->
+                        <div class="press-indicator" id="pressIndicator">
+                            <div class="press-bar" id="pressBar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Input controls -->
+                    <div class="decoder-controls">
+                        <p class="control-hint">Press & hold <kbd>Space</kbd> or click the key</p>
+                        <div class="morse-input-display" id="morseInputDisplay">
+                            <span class="morse-placeholder">Input signals here...</span>
+                        </div>
+                        <div class="input-actions">
+                            <button class="btn btn-secondary" id="backspaceBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+                                Backspace
+                            </button>
+                            <button class="btn btn-ghost" id="clearDecoderBtn">
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Decoder speed -->
+                    <div class="speed-control">
+                        <label for="decoderSpeedSlider">Sensitivity</label>
+                        <input type="range" id="decoderSpeedSlider" min="1" max="10" value="5" class="speed-slider">
+                        <span class="speed-label" id="decoderSpeedLabel">5x</span>
+                    </div>
+                </div>
+
+                <!-- Right: Decoded Message Canvas -->
+                <div class="panel-card canvas-card">
+                    <div class="card-header">
+                        <h2>Decoded Message</h2>
+                        <div class="status-indicator" id="decoderStatus">
+                            <span class="status-dot"></span>
+                            <span>Listening</span>
+                        </div>
+                    </div>
+                    <canvas id="messageCanvas" width="600" height="400"></canvas>
+                    <div class="canvas-controls">
+                        <button class="btn btn-ghost" id="clearCanvasBtn">Clear Canvas</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Morse Code Reference -->
+        <section class="reference-section" id="referenceSection">
+            <button class="reference-toggle" id="referenceToggle">
+                <span>Morse Code Reference</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="reference-grid" id="referenceGrid">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- Audio Toggle -->
+        <button class="audio-toggle" id="audioToggle" title="Toggle Sound">
+            <svg class="audio-on" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            <svg class="audio-off" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
